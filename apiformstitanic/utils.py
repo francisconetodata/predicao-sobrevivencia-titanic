@@ -1,7 +1,9 @@
 import h2o
 import pandas as pd
+from .apps import ApiPredictMLConfig
 h2o.init()
-mb = h2o.load_model('C:\\Users\\engme\\modelo')
+mb = h2o.load_model(ApiPredictMLConfig.MODEL_FILE)
+
 def predict_suvirved(
         Pclass,
         Sex,

@@ -6,8 +6,9 @@ from django.views.generic.edit import FormView
 from .utils import predict_suvirved
 
 from .models import Base
-from .serializers import BaseSerializer
+from .serializers import BaseSerializer, PredictSerializer
 from .forms import FormPredict
+from .utils import predict_suvirved
 
 def FormPredictView(request):
     form = FormPredict(request.POST or None)
@@ -53,3 +54,34 @@ class BaseAPIView(APIView):
         serializer.save()
         return Response(serializer.data,status=status.HTTP_201_CREATED)
 
+class PredictAPIView(APIView):
+    """
+
+    API da predição.
+    Fonte: https://www.kaggle.com/competitions/titanic
+    E-mail: francisconetodata@gmail.com
+
+
+    """
+
+    def post(self,request):
+        serializer = PredictSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        resposta = predict_suvirved(
+                Age= serializer.data["age"],
+                Pclass= serializer.data["pclass"],
+                Sex =  serializer.data["sex"],
+                Parch = serializer.data["parch"],
+                Fare= serializer.data["fare"],
+                Embarked = serializer.data["embarked"],
+                SibSp= serializer.data["sibsp"]
+            )
+        if resposta == 1:
+            texto_resp = "A pessoa sobreviveu!"
+        else:
+            texto_resp = "A pessoa não sobreviveu!"
+        resposta_dict = {
+            "survived": resposta,
+            "text":texto_resp
+        }
+        return Response(resposta_dict, status=200 )
