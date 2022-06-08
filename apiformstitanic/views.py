@@ -2,8 +2,10 @@ from django.shortcuts import render
 from requests import request
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from rest_framework import generics
 from django.views.generic.edit import FormView
 from .utils import predict_suvirved
+from rest_framework.schemas.openapi import AutoSchema
 
 from .models import Base
 from .serializers import BaseSerializer, PredictSerializer
@@ -34,7 +36,7 @@ def FormPredictView(request):
     return render(request, 'index.html', {'form': form,
                                           'resposta':resposta_text})
 
-class BaseAPIView(APIView):
+class BaseAPIView(generics.ListCreateAPIView):
     """
 
     API da base de dados do Titanic.
@@ -43,16 +45,9 @@ class BaseAPIView(APIView):
 
 
     """
-    def get(self,request):
-        passageiro = Base.objects.all()
-        serializer = BaseSerializer(passageiro, many = True)
-        return Response(serializer.data)
+    queryset = Base.objects.all()
+    serializer_class = BaseSerializer
 
-    def post(self,request):
-        serializer = BaseSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response(serializer.data,status=status.HTTP_201_CREATED)
 
 class PredictAPIView(APIView):
     """
@@ -63,9 +58,11 @@ class PredictAPIView(APIView):
 
 
     """
-
+    serializer_class = PredictSerializer
     def post(self,request):
+        
         serializer = PredictSerializer(data=request.data)
+        self.schema = AutoSchema.get_components(PredictSerializer.Meta.fields)
         serializer.is_valid(raise_exception=True)
         resposta = predict_suvirved(
                 Age= serializer.data["age"],
@@ -84,4 +81,4 @@ class PredictAPIView(APIView):
             "survived": resposta,
             "text":texto_resp
         }
-        return Response(resposta_dict, status=200 )
+        return Response(resposta_dict, status=201 )
